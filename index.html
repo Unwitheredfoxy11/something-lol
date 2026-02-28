@@ -2,17 +2,35 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>PNG Trimmer</title>
+  <title>EliminadorDePixelesTransparentesInnecesarios-Inador</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>PNG Transparent Pixel Trimmer</h1>
 
-  <input type="file" id="upload" accept="image/png">
-  <button id="downloadBtn" disabled>Descargar PNG recortado</button>
+  <div class="container">
+    <h1>🧪 EliminadorDePixelesTransparentesInnecesarios-Inador</h1>
+    <p class="subtitle">Porque nadie tiene tiempo para canvas inflado.</p>
 
-  <br><br>
-  <canvas id="canvas"></canvas>
+    <div id="dropZone" class="drop-zone">
+      <p>Arrastra tu PNG aquí<br>o haz clic para subirlo</p>
+      <input type="file" id="upload" accept="image/png" hidden>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="preview-container">
+      <div>
+        <h3>Original</h3>
+        <canvas id="originalCanvas"></canvas>
+      </div>
+      <div>
+        <h3>Recortado</h3>
+        <canvas id="trimmedCanvas"></canvas>
+      </div>
+    </div>
+
+    <button id="downloadBtn" disabled>Descargar PNG Recortado</button>
+  </div>
 
   <script src="script.js"></script>
 </body>
