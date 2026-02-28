@@ -44,11 +44,14 @@ h1 { margin: 0 0 6px 0; font-size: 22px; }
 
 .file-input {
   position: absolute;
-  inset: 0; /* top:0; left:0; right:0; bottom:0 */
+  inset: 0;
   width: 100%;
   height: 100%;
   opacity: 0;
+  z-index: 5;
   cursor: pointer;
+  /* asegúrate que capture eventos pointer */
+  pointer-events: auto;
 }
 
 .preview-container {

@@ -11,14 +11,28 @@ const dropText = document.getElementById("dropText");
 const oCtx = originalCanvas.getContext("2d");
 const tCtx = trimmedCanvas.getContext("2d");
 
-let currentFile = null;        // archivo subido
-let imageLoaded = false;       // indica que la imagen está lista en originalCanvas
+let currentFile = null;
+let imageLoaded = false;
 let trimmedDataURL = null;
 
 function setStatus(text, type = "") {
   stats.className = type ? `stats ${type}` : "stats";
   stats.innerHTML = text;
 }
+
+/* --- UX: click/keyboard triggers el input --- */
+dropZone.addEventListener("click", () => {
+  // reset value para garantizar que change se dispare incluso con mismo archivo
+  upload.value = "";
+  upload.click();
+});
+dropZone.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    upload.value = "";
+    upload.click();
+  }
+});
 
 /* --- Drag & drop UX --- */
 ["dragenter", "dragover"].forEach(evt => {
@@ -29,7 +43,6 @@ function setStatus(text, type = "") {
     e.dataTransfer && (e.dataTransfer.dropEffect = "copy");
   });
 });
-
 ["dragleave", "dragend"].forEach(evt => {
   dropZone.addEventListener(evt, (e) => {
     e.preventDefault();
@@ -37,26 +50,28 @@ function setStatus(text, type = "") {
     dropZone.classList.remove("highlight");
   });
 });
-
-/* prevent browser default for whole window (nice for some OS) */
 ["dragover","drop"].forEach(name => {
   window.addEventListener(name, e => {
     e.preventDefault();
     e.stopPropagation();
   });
 });
-
 dropZone.addEventListener("drop", (e) => {
   dropZone.classList.remove("highlight");
   const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
   loadFile(file);
 });
 
-/* The input is visible but transparent and sits over the drop zone,
-   so clicking works reliably across browsers. */
+/* input change */
 upload.addEventListener("change", (e) => {
   const file = e.target.files && e.target.files[0];
+  if (!file) {
+    setStatus("No se seleccionó archivo.", "error");
+    return;
+  }
+  // guardamos y limpiamos el valor para permitir re-selección
   loadFile(file);
+  upload.value = "";
 });
 
 /* Reset */
@@ -78,11 +93,8 @@ processBtn.addEventListener("click", () => {
     setStatus("No hay imagen cargada para procesar.", "error");
     return;
   }
-  setStatus("Iniciando el Inador... 🔬");
-  // pequeño delay para percibir el mensaje (opcional)
-  setTimeout(() => {
-    trimImage();
-  }, 120);
+  setStatus("Iniciando el Inador...");
+  setTimeout(() => trimImage(), 120);
 });
 
 function loadFile(file) {
@@ -91,7 +103,11 @@ function loadFile(file) {
     return;
   }
 
-  if (file.type !== "image/png") {
+  // validación tolerante: acepta por type o por extensión .png
+  const isPNGbyType = file.type && file.type.toLowerCase() === "image/png";
+  const isPNGbyName = file.name && file.name.toLowerCase().endsWith(".png");
+
+  if (!isPNGbyType && !isPNGbyName) {
     setStatus("Por favor sube únicamente archivos PNG con transparencia.", "error");
     return;
   }
@@ -107,7 +123,7 @@ function loadFile(file) {
     URL.revokeObjectURL(img.src);
     originalCanvas.width = img.width;
     originalCanvas.height = img.height;
-    oCtx.clearRect(0,0, originalCanvas.width, originalCanvas.height);
+    oCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
     oCtx.drawImage(img, 0, 0);
 
     imageLoaded = true;
