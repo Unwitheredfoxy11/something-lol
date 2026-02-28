@@ -2,6 +2,7 @@ const dropZone = document.getElementById("dropZone");
 const upload = document.getElementById("upload");
 const originalCanvas = document.getElementById("originalCanvas");
 const trimmedCanvas = document.getElementById("trimmedCanvas");
+const processBtn = document.getElementById("processBtn");
 const downloadBtn = document.getElementById("downloadBtn");
 const resetBtn = document.getElementById("resetBtn");
 const stats = document.getElementById("stats");
@@ -10,6 +11,8 @@ const dropText = document.getElementById("dropText");
 const oCtx = originalCanvas.getContext("2d");
 const tCtx = trimmedCanvas.getContext("2d");
 
+let currentFile = null;        // archivo subido
+let imageLoaded = false;       // indica que la imagen está lista en originalCanvas
 let trimmedDataURL = null;
 
 function setStatus(text, type = "") {
@@ -46,14 +49,14 @@ function setStatus(text, type = "") {
 dropZone.addEventListener("drop", (e) => {
   dropZone.classList.remove("highlight");
   const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-  handleFile(file);
+  loadFile(file);
 });
 
 /* The input is visible but transparent and sits over the drop zone,
    so clicking works reliably across browsers. */
 upload.addEventListener("change", (e) => {
   const file = e.target.files && e.target.files[0];
-  handleFile(file);
+  loadFile(file);
 });
 
 /* Reset */
@@ -62,11 +65,27 @@ resetBtn.addEventListener("click", () => {
   trimmedCanvas.width = trimmedCanvas.height = 0;
   downloadBtn.disabled = true;
   resetBtn.disabled = true;
+  processBtn.disabled = true;
   trimmedDataURL = null;
+  currentFile = null;
+  imageLoaded = false;
   setStatus("Sube un PNG para comenzar.");
 });
 
-function handleFile(file) {
+/* Procesar manualmente */
+processBtn.addEventListener("click", () => {
+  if (!imageLoaded) {
+    setStatus("No hay imagen cargada para procesar.", "error");
+    return;
+  }
+  setStatus("Iniciando el Inador... 🔬");
+  // pequeño delay para percibir el mensaje (opcional)
+  setTimeout(() => {
+    trimImage();
+  }, 120);
+});
+
+function loadFile(file) {
   if (!file) {
     setStatus("No se detectó archivo.", "error");
     return;
@@ -77,24 +96,33 @@ function handleFile(file) {
     return;
   }
 
+  currentFile = file;
   setStatus("Cargando imagen...");
 
   const img = new Image();
-  img.crossOrigin = "anonymous"; // buena práctica para evitar problemas si se llegara a usar URLs
+  img.crossOrigin = "anonymous";
   img.src = URL.createObjectURL(file);
 
   img.onload = () => {
-    URL.revokeObjectURL(img.src); // liberar memoria
+    URL.revokeObjectURL(img.src);
     originalCanvas.width = img.width;
     originalCanvas.height = img.height;
     oCtx.clearRect(0,0, originalCanvas.width, originalCanvas.height);
     oCtx.drawImage(img, 0, 0);
 
-    trimImage();
+    imageLoaded = true;
+    trimmedDataURL = null;
+    downloadBtn.disabled = true;
+    resetBtn.disabled = false;
+    processBtn.disabled = false;
+    setStatus(`Imagen cargada: ${img.width}x${img.height}px — Presiona "Iniciar Inador" cuando quieras.`);
   };
 
   img.onerror = () => {
     setStatus("Error al cargar la imagen. ¿El archivo está dañado?", "error");
+    currentFile = null;
+    imageLoaded = false;
+    processBtn.disabled = true;
   };
 }
 
@@ -132,7 +160,6 @@ function trimImage() {
   const width = right - left + 1;
   const height = bottom - top + 1;
 
-  // Crear un canvas temporal si prefieres (aquí usamos el trimmedCanvas directo)
   trimmedCanvas.width = width;
   trimmedCanvas.height = height;
 
@@ -142,14 +169,13 @@ function trimImage() {
 
   trimmedDataURL = trimmedCanvas.toDataURL("image/png");
   downloadBtn.disabled = false;
-  resetBtn.disabled = false;
 
   const originalArea = W * H;
   const newArea = width * height;
   const reduction = (((originalArea - newArea) / originalArea) * 100).toFixed(2);
 
   setStatus(
-    `Original: ${W}x${H}px — Nuevo: ${width}x${height}px — Reducción de área: ${reduction}%`,
+    `¡Listo! Original: ${W}x${H}px — Nuevo: ${width}x${height}px — Reducción de área: ${reduction}%`,
     "success"
   );
 }
