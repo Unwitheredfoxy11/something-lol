@@ -1,35 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EliminadorDePixelesTransparentesInnecesarios-Inador</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <div class="container">
     <h1>🧪 EliminadorDePixelesTransparentesInnecesarios-Inador</h1>
     <p class="subtitle">Porque nadie tiene tiempo para canvas inflado.</p>
 
-    <div id="dropZone" class="drop-zone">
-      <p>Arrastra tu PNG aquí<br>o haz clic para subirlo</p>
-      <input type="file" id="upload" accept="image/png" hidden>
+    <div id="dropZone" class="drop-zone" aria-label="Zona para arrastrar o hacer click">
+      <p id="dropText">Arrastra tu PNG aquí<br>o haz clic para subirlo</p>
+      <!-- Input invisible pero interactuable -->
+      <input class="file-input" id="upload" type="file" accept="image/png" />
     </div>
 
-    <div class="stats" id="stats"></div>
+    <div class="stats" id="stats">Sube un PNG para comenzar.</div>
 
     <div class="preview-container">
-      <div>
+      <div class="preview-card">
         <h3>Original</h3>
         <canvas id="originalCanvas"></canvas>
       </div>
-      <div>
+      <div class="preview-card">
         <h3>Recortado</h3>
         <canvas id="trimmedCanvas"></canvas>
       </div>
     </div>
 
-    <button id="downloadBtn" disabled>Descargar PNG Recortado</button>
+    <div class="controls">
+      <button id="downloadBtn" disabled>Descargar PNG Recortado</button>
+      <button id="resetBtn" class="secondary" disabled>Procesar otro</button>
+    </div>
   </div>
 
   <script src="script.js"></script>

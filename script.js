@@ -1,127 +1,120 @@
-const upload = document.getElementById("upload");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const downloadBtn = document.getElementById("downloadBtn");
-
-let croppedImageData = null;
-
-upload.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const img = new Image();
-  img.src = URL.createObjectURL(file);
-
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-
-    trimCanvas();
-  };
-});
-
-function trimCanvas() {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-
-  let top = null, left = null, right = null, bottom = null;
-
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      const index = (y * canvas.width + x) * 4;
-      const alpha = data[index + 3];
-
-      if (alpha !== 0) {
-        if (top === null) top = y;
-        if (left === null || x < left) left = x;
-        if (right === null || x > right) right = x;
-        bottom = y;
-      }
-    }
-  }
-
-  if (top === null) return;
-
-  const width = right - left + 1;
-  const height = bottom - top + 1;
-
-  const cropped = ctx.getImageData(left, top, width, height);
-
-  canvas.width = width;
-  canvas.height = height;
-  ctx.putImageData(cropped, 0, 0);
-
-  croppedImageData = canvas.toDataURL("image/png");
-  downloadBtn.disabled = false;
-}
-
-downloadBtn.addEventListener("click", () => {
-  if (!croppedImageData) return;
-
-  const link = document.createElement("a");
-  link.href = croppedImageData;
-  link.download = "trimmed.png";
-  link.click();
-});const dropZone = document.getElementById("dropZone");
+const dropZone = document.getElementById("dropZone");
 const upload = document.getElementById("upload");
 const originalCanvas = document.getElementById("originalCanvas");
 const trimmedCanvas = document.getElementById("trimmedCanvas");
 const downloadBtn = document.getElementById("downloadBtn");
+const resetBtn = document.getElementById("resetBtn");
 const stats = document.getElementById("stats");
+const dropText = document.getElementById("dropText");
 
 const oCtx = originalCanvas.getContext("2d");
 const tCtx = trimmedCanvas.getContext("2d");
 
 let trimmedDataURL = null;
 
-dropZone.addEventListener("click", () => upload.click());
+function setStatus(text, type = "") {
+  stats.className = type ? `stats ${type}` : "stats";
+  stats.innerHTML = text;
+}
 
-dropZone.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  dropZone.style.background = "rgba(59, 130, 246, 0.2)";
+/* --- Drag & drop UX --- */
+["dragenter", "dragover"].forEach(evt => {
+  dropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add("highlight");
+    e.dataTransfer && (e.dataTransfer.dropEffect = "copy");
+  });
 });
 
-dropZone.addEventListener("dragleave", () => {
-  dropZone.style.background = "transparent";
+["dragleave", "dragend"].forEach(evt => {
+  dropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove("highlight");
+  });
+});
+
+/* prevent browser default for whole window (nice for some OS) */
+["dragover","drop"].forEach(name => {
+  window.addEventListener(name, e => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
 });
 
 dropZone.addEventListener("drop", (e) => {
-  e.preventDefault();
-  dropZone.style.background = "transparent";
-  handleFile(e.dataTransfer.files[0]);
+  dropZone.classList.remove("highlight");
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  handleFile(file);
 });
 
+/* The input is visible but transparent and sits over the drop zone,
+   so clicking works reliably across browsers. */
 upload.addEventListener("change", (e) => {
-  handleFile(e.target.files[0]);
+  const file = e.target.files && e.target.files[0];
+  handleFile(file);
+});
+
+/* Reset */
+resetBtn.addEventListener("click", () => {
+  originalCanvas.width = originalCanvas.height = 0;
+  trimmedCanvas.width = trimmedCanvas.height = 0;
+  downloadBtn.disabled = true;
+  resetBtn.disabled = true;
+  trimmedDataURL = null;
+  setStatus("Sube un PNG para comenzar.");
 });
 
 function handleFile(file) {
-  if (!file) return;
+  if (!file) {
+    setStatus("No se detectó archivo.", "error");
+    return;
+  }
+
+  if (file.type !== "image/png") {
+    setStatus("Por favor sube únicamente archivos PNG con transparencia.", "error");
+    return;
+  }
+
+  setStatus("Cargando imagen...");
 
   const img = new Image();
+  img.crossOrigin = "anonymous"; // buena práctica para evitar problemas si se llegara a usar URLs
   img.src = URL.createObjectURL(file);
 
   img.onload = () => {
+    URL.revokeObjectURL(img.src); // liberar memoria
     originalCanvas.width = img.width;
     originalCanvas.height = img.height;
+    oCtx.clearRect(0,0, originalCanvas.width, originalCanvas.height);
     oCtx.drawImage(img, 0, 0);
 
     trimImage();
   };
+
+  img.onerror = () => {
+    setStatus("Error al cargar la imagen. ¿El archivo está dañado?", "error");
+  };
 }
 
 function trimImage() {
-  const imageData = oCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+  if (!originalCanvas.width || !originalCanvas.height) {
+    setStatus("Canvas vacío — no hay imagen para recortar.", "error");
+    return;
+  }
+
+  const W = originalCanvas.width;
+  const H = originalCanvas.height;
+  const imageData = oCtx.getImageData(0, 0, W, H);
   const data = imageData.data;
 
   let top = null, left = null, right = null, bottom = null;
 
-  for (let y = 0; y < originalCanvas.height; y++) {
-    for (let x = 0; x < originalCanvas.width; x++) {
-      const index = (y * originalCanvas.width + x) * 4;
-      const alpha = data[index + 3];
-
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const idx = (y * W + x) * 4;
+      const alpha = data[idx + 3];
       if (alpha !== 0) {
         if (top === null) top = y;
         if (left === null || x < left) left = x;
@@ -131,36 +124,43 @@ function trimImage() {
     }
   }
 
-  if (top === null) return;
+  if (top === null) {
+    setStatus("La imagen no tiene píxeles no transparentes (todo transparente).", "error");
+    return;
+  }
 
   const width = right - left + 1;
   const height = bottom - top + 1;
 
+  // Crear un canvas temporal si prefieres (aquí usamos el trimmedCanvas directo)
   trimmedCanvas.width = width;
   trimmedCanvas.height = height;
 
   const cropped = oCtx.getImageData(left, top, width, height);
+  tCtx.clearRect(0,0,width,height);
   tCtx.putImageData(cropped, 0, 0);
 
   trimmedDataURL = trimmedCanvas.toDataURL("image/png");
   downloadBtn.disabled = false;
+  resetBtn.disabled = false;
 
-  const originalArea = originalCanvas.width * originalCanvas.height;
+  const originalArea = W * H;
   const newArea = width * height;
   const reduction = (((originalArea - newArea) / originalArea) * 100).toFixed(2);
 
-  stats.innerHTML = `
-    Original: ${originalCanvas.width}x${originalCanvas.height} px<br>
-    Nuevo: ${width}x${height} px<br>
-    Reducción de área: ${reduction}%
-  `;
+  setStatus(
+    `Original: ${W}x${H}px — Nuevo: ${width}x${height}px — Reducción de área: ${reduction}%`,
+    "success"
+  );
 }
 
+/* Descargar */
 downloadBtn.addEventListener("click", () => {
   if (!trimmedDataURL) return;
-
   const link = document.createElement("a");
   link.href = trimmedDataURL;
   link.download = "recortado-inador.png";
+  document.body.appendChild(link);
   link.click();
+  link.remove();
 });
