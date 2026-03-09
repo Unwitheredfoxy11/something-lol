@@ -1,3 +1,4 @@
+// script.js (fix: evita que el selector se abra dos veces)
 const dropZone = document.getElementById("dropZone");
 const upload = document.getElementById("upload");
 const originalCanvas = document.getElementById("originalCanvas");
@@ -20,8 +21,16 @@ function setStatus(text, type = "") {
   stats.innerHTML = text;
 }
 
+/* PREVENCIÓN: si el input recibe el click, que no burbujee al dropZone */
+upload.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
 /* --- UX: click/keyboard triggers el input --- */
-dropZone.addEventListener("click", () => {
+dropZone.addEventListener("click", (e) => {
+  // Si el target es el input (por algún motivo) no forzamos otro click
+  if (e.target === upload) return;
+
   // reset value para garantizar que change se dispare incluso con mismo archivo
   upload.value = "";
   upload.click();
