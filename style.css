@@ -23,7 +23,7 @@ body {
   padding: 28px;
 }
 
-h1 { margin: 0 0 6px 0; font-size: 22px; }
+h1 { margin: 0 0 6px 0; font-size: 22px; overflow-wrap:anywhere; }
 .subtitle { color: var(--muted); margin: 0 0 20px 0; }
 
 .drop-zone {
@@ -41,6 +41,7 @@ h1 { margin: 0 0 6px 0; font-size: 22px; }
   transform: translateY(-4px);
 }
 .drop-zone p { margin: 0; color: var(--muted); font-size: 15px; }
+.drop-zone .drop-hint { margin-top: 10px; font-size: 12px; }
 
 .file-input {
   position: absolute;
@@ -50,8 +51,13 @@ h1 { margin: 0 0 6px 0; font-size: 22px; }
   opacity: 0;
   z-index: 5;
   cursor: pointer;
-  /* asegúrate que capture eventos pointer */
   pointer-events: auto;
+}
+
+.file-summary {
+  margin-top: 14px;
+  color: #d4d4d4;
+  overflow-wrap: anywhere;
 }
 
 .preview-container {
@@ -116,3 +122,10 @@ button.primary {
 }
 .error { color: #ff7b7b; }
 .success { color: #9be89b; }
+.privacy-note { color: #777; font-size: 12px; margin-top: 24px; }
+
+@media (max-width: 600px) {
+  .container { margin: 16px auto; padding: 18px; }
+  .drop-zone { padding: 28px 16px; }
+  .controls button { width: 100%; }
+}
