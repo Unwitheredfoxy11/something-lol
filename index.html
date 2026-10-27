@@ -11,32 +11,35 @@
     <h1>🧪 EliminadorDePixelesTransparentesInnecesarios-Inador</h1>
     <p class="subtitle">Porque nadie tiene tiempo para canvas inflado.</p>
 
-    <div id="dropZone" class="drop-zone" aria-label="Zona para arrastrar o hacer click" tabindex="0">
-      <p id="dropText">Arrastra tu PNG aquí<br>o haz clic para subirlo</p>
-      <!-- Input invisible pero interactuable -->
-      <input class="file-input" id="upload" type="file" accept="image/png" />
+    <div id="dropZone" class="drop-zone" role="button" aria-label="Seleccionar archivos o arrastrarlos aquí" tabindex="0">
+      <p id="dropText">Arrastra aquí tus PNG o archivos ZIP<br>o haz clic para explorar tus archivos</p>
+      <p class="drop-hint">Admite varios PNG a la vez y archivos ZIP que contengan PNG.</p>
+      <input class="file-input" id="upload" type="file" multiple />
     </div>
 
-    <div class="stats" id="stats">Sube un PNG para comenzar.</div>
+    <div class="file-summary" id="fileSummary">Todavía no hay archivos seleccionados.</div>
+    <div class="stats" id="stats" role="status" aria-live="polite">Selecciona tus archivos y presiona «Iniciar Inador».</div>
 
     <div class="preview-container">
       <div class="preview-card">
-        <h3>Original</h3>
+        <h3>Original (primer PNG)</h3>
         <canvas id="originalCanvas"></canvas>
       </div>
       <div class="preview-card">
-        <h3>Recortado</h3>
+        <h3>Recortado (primer PNG)</h3>
         <canvas id="trimmedCanvas"></canvas>
       </div>
     </div>
 
     <div class="controls">
       <button id="processBtn" class="primary" disabled>Iniciar Inador</button>
-      <button id="downloadBtn" disabled>Descargar PNG Recortado</button>
-      <button id="resetBtn" class="secondary" disabled>Procesar otro</button>
+      <button id="downloadBtn" disabled>Descargar resultados (.zip)</button>
+      <button id="resetBtn" class="secondary" disabled>Procesar otros</button>
     </div>
+    <p class="privacy-note">El procesamiento se hace en tu navegador; tus archivos no se suben a un servidor.</p>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
